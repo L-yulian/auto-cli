@@ -20,6 +20,9 @@ aurar create
 #执行项目文件夹名称并选择模版创建项目
 aurar create <project-name>
 
+# 更新脚手架到最新版本
+aurar update
+
 # 查看脚手架版本
 aurar --version
 aurar -v
