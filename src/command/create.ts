@@ -1,7 +1,9 @@
 import path from "path";
 import fs from "fs-extra";
+import axios, { AxiosResponse } from "axios";
 import { input, select } from "@inquirer/prompts";
 import { clone } from "../utils/clone";
+import { name, version } from "../../package.json";
 export interface TemplateInfo {
   name: string; // 模版名称
   description: string; // 模版描述
@@ -19,6 +21,26 @@ export function isOverwrite(filePath: string) {
     ],
   });
 }
+
+export const getNpmInfo = async (name: string) => {
+  const npmUrl = `https://www.npmjs.com/package/${name}`;
+  let res = {};
+  try {
+    res = await axios.get(npmUrl);
+  } catch (err) {
+    console.error(err);
+  }
+  return res;
+};
+
+export const getNpmLastVersion = async (name: string) => {
+  const { data } = (await getNpmInfo(name)) as AxiosResponse;
+  console.log("npm info", data);
+};
+
+export const checkVersion = async (name: string, version: string) => {
+  await getNpmLastVersion(name);
+};
 
 export const templates: Map<string, TemplateInfo> = new Map([
   [
@@ -60,6 +82,7 @@ export async function create(projectName?: any) {
     });
   }
 
+  // 判断项目是否存在, 若存在则询问是否覆盖
   const filePath = path.resolve(process.cwd(), projectName);
   if (fs.existsSync(filePath)) {
     const run = await isOverwrite(projectName);
@@ -69,6 +92,10 @@ export async function create(projectName?: any) {
       return; // 不做任何处理，直接退出
     }
   }
+
+  //   检测版本更新
+  await checkVersion(name, version);
+
   const templateName = await select({
     message: "请选择模版",
     choices: templateList,
