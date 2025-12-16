@@ -1,7 +1,9 @@
 import path from "path";
 import fs from "fs-extra";
+import { gt } from "lodash";
 import axios, { AxiosResponse } from "axios";
 import { input, select } from "@inquirer/prompts";
+import chalk from "chalk";
 import { clone } from "../utils/clone";
 import { name, version } from "../../package.json";
 export interface TemplateInfo {
@@ -23,7 +25,7 @@ export function isOverwrite(filePath: string) {
 }
 
 export const getNpmInfo = async (name: string) => {
-  const npmUrl = `https://www.npmjs.com/package/${name}`;
+  const npmUrl = `https://registry.npmjs.org/${name}`;
   let res = {};
   try {
     res = await axios.get(npmUrl);
@@ -33,13 +35,30 @@ export const getNpmInfo = async (name: string) => {
   return res;
 };
 
-export const getNpmLastVersion = async (name: string) => {
+export const getNpmLatestVersion = async (name: string) => {
   const { data } = (await getNpmInfo(name)) as AxiosResponse;
-  console.log("npm info", data);
+  return data["dist-tags"].latest;
 };
 
 export const checkVersion = async (name: string, version: string) => {
-  await getNpmLastVersion(name);
+  const latestVersion = await getNpmLatestVersion(name);
+  console.log("[ latestVersion ] >", latestVersion);
+  console.log("[ version ] >", version);
+  const need = gt(latestVersion, version);
+  console.log("[ need ] >", need);
+  if (need) {
+    console.warn(
+      `监测到aurar最新版本：${chalk.blackBright(
+        latestVersion
+      )}，当前版本${chalk.blackBright(version)}, 请更新！`
+    );
+    console.log(
+      `可使用：${chalk.yellow(
+        "npm install aurar-cli@latest"
+      )}, 或者使用：${chalk.yellow("aurar-cli update")}更新`
+    );
+  }
+  return need;
 };
 
 export const templates: Map<string, TemplateInfo> = new Map([
