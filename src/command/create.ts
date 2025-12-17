@@ -95,7 +95,7 @@ export async function create(projectName?: any) {
     }
   );
   console.log("[ projectName ] >", projectName);
-  if (Object.keys(projectName).length == 0) {
+  if (!projectName || projectName.trim().length == 0) {
     projectName = await input({
       message: "请输入项目名称",
     });
